@@ -1,0 +1,43 @@
+# Copyright VMware, Inc.
+# SPDX-License-Identifier: APACHE-2.0
+
+version: '2'
+services:
+  mariadb:
+    image: docker.io/bitnami/mariadb:11.1
+    environment:
+      - MARIADB_HOST=mariadb
+      - MARIADB_USER=bn_moodle
+      - MARIADB_DATABASE=bitnami_moodle
+      - MARIADB_CHARACTER_SET=utf8mb4
+      - MARIADB_COLLATE=utf8mb4_unicode_ci
+      - MARIADB_PASSWORD=bitnami_moodle
+      - MARIADB_ROOT_PASSWORD=bitnami_moodle
+    volumes:
+      - '../volumes/mariadb-data:/bitnami/mariadb'
+    ports:
+      - "3306:3306"
+    networks:
+      - moodle-network
+  moodle:
+    image: docker.io/bitnami/moodle:4.3
+    ports:
+      - '80:8080'
+      - '443:8443'
+    environment:
+      - MARIADB_HOST=mariadb
+      - MARIADB_PORT_NUMBER=3306
+      - MOODLE_DATABASE_USER=bn_moodle
+      - MOODLE_DATABASE_NAME=bitnami_moodle
+      - MOODLE_DATABASE_PASSWORD=bitnami_moodle
+      - BITNAMI_DEBUG=true
+    volumes:
+      - '../volumes/moodle-data:/bitnami/moodle'
+      - '../volumes/moodle-apps:/bitnami/moodledata'
+    depends_on:
+      - mariadb
+    networks:
+      - moodle-network
+networks:
+  moodle-network:
+    driver: bridge
