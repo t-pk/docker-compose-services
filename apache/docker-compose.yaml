@@ -7,7 +7,7 @@ networks:
 services:
   ignite:
     image: apacheignite/ignite:latest
-    container_name: ignite
+    container_name: apache-ignite
     ports:
       - "10800:10800"  # Port for Ignite native communication
       - "47100:47100"  # Port for Ignite discovery
@@ -23,6 +23,7 @@ services:
 
   web-console:
     image: apacheignite/web-console-standalone
+    container_name: apache-ignite-web-console
     environment:
       WC_USER: admin
       WC_PASSWORD: admin123
@@ -34,7 +35,7 @@ services:
 
   spark-master:
     image: apache/spark:latest
-    container_name: spark-master
+    container_name: apache-spark-master
     command: "/opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --host spark-master"
     ports:
       - "8080:8080"  # Spark web UI
@@ -51,7 +52,7 @@ services:
 
   spark-worker:
     image: apache/spark:latest
-    container_name: spark-worker
+    container_name: apache-spark-worker
     command: "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"
     depends_on:
       - spark-master
@@ -69,7 +70,7 @@ services:
 
   spark-thrift:
     image: apache/spark:latest
-    container_name: spark-thrift
+    container_name: apache-spark-thrift
     command: "/opt/spark/bin/spark-submit --class org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 --master spark://spark-master:7077"
     depends_on:
       - spark-master
