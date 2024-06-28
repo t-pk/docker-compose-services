@@ -1,0 +1,92 @@
+version: '3.8'
+
+networks:
+  spark-net:
+    driver: bridge
+
+services:
+  ignite:
+    image: apacheignite/ignite:latest
+    container_name: ignite
+    ports:
+      - "10800:10800"  # Port for Ignite native communication
+      - "47100:47100"  # Port for Ignite discovery
+      - "47500:47500"  # Port for Ignite discovery
+      - "49112:49112"  # Port for Ignite JMX monitoring
+    environment:
+      - IGNITE_QUIET=false  # Enables logging output
+      - IGNITE_USER=username  # Replace with your Ignite username
+      - IGNITE_PASSWORD=password  # Replace with your Ignite password
+      - IGNITE_CONFIG_URL=https://raw.githubusercontent.com/apache/ignite/master/examples/config/example-ignite.xml
+    networks:
+      - spark-net
+
+  web-console:
+    image: apacheignite/web-console-standalone
+    environment:
+      WC_USER: admin
+      WC_PASSWORD: admin123
+    ports:
+      - 80:80
+
+    networks:
+      - spark-net
+
+  spark-master:
+    image: apache/spark:latest
+    container_name: spark-master
+    command: "/opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --host spark-master"
+    ports:
+      - "8080:8080"  # Spark web UI
+      - "7077:7077"  # Spark master port
+    environment:
+      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_NETWORK_CRYPTO_ENABLED=false
+      - SPARK_RPC_MESSAGE_MAX_SIZE=512  # Set to a higher value as needed
+      - SPARK_MAX_REMOTE_BLOCK_SIZE_FETCH_TO_MEM=134217728  # 128MB
+
+    networks:
+      - spark-net
+
+  spark-worker:
+    image: apache/spark:latest
+    container_name: spark-worker
+    command: "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081"  # Spark worker web UI
+    environment:
+      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_NETWORK_CRYPTO_ENABLED=false
+      - SPARK_RPC_MESSAGE_MAX_SIZE=512  # Set to a higher value as needed
+      - SPARK_MAX_REMOTE_BLOCK_SIZE_FETCH_TO_MEM=134217728  # 128MB
+
+    networks:
+      - spark-net
+
+  spark-thrift:
+    image: apache/spark:latest
+    container_name: spark-thrift
+    command: "/opt/spark/bin/spark-submit --class org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 --master spark://spark-master:7077"
+    depends_on:
+      - spark-master
+      - spark-worker
+    ports:
+      - "10000:10000"  # Spark Thrift Server port
+      - "4040:4040"    # Spark Thrift Server web UI
+    environment:
+      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_NETWORK_CRYPTO_ENABLED=false
+      - SPARK_RPC_MESSAGE_MAX_SIZE=512  # Set to a higher value as needed
+      - SPARK_MAX_REMOTE_BLOCK_SIZE_FETCH_TO_MEM=134217728  # 128MB
+      - HADOOP_CONF_DIR=/opt/spark/conf
+      - HIVE_CONF_DIR=/opt/spark/conf
+      # - HIVE_USER=username
+      # - HIVE_PASSWORD=password
+
+    networks:
+      - spark-net
