@@ -1,1 +1,3 @@
-# service-docker-compose
+# docker-compose-services
+Includes services such as:
+apache-ignite, apache-spark, keycloak, moodle, mysql, mysql5, odoo, postgresql, redis....
