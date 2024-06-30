@@ -5,7 +5,7 @@ networks:
     driver: bridge
 
 services:
-  ignite:
+  apache-ignite:
     image: apacheignite/ignite:latest
     container_name: apache-ignite
     ports:
@@ -21,18 +21,6 @@ services:
     networks:
       - spark-net
 
-  web-console:
-    image: apacheignite/web-console-standalone
-    container_name: apache-ignite-web-console
-    environment:
-      WC_USER: admin
-      WC_PASSWORD: admin123
-    ports:
-      - 80:80
-
-    networks:
-      - spark-net
-
   spark-master:
     image: apache/spark:latest
     container_name: apache-spark-master
@@ -41,12 +29,11 @@ services:
       - "8080:8080"  # Spark web UI
       - "7077:7077"  # Spark master port
     environment:
-      - SPARK_DRIVER_MEMORY=1G
-      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_DRIVER_MEMORY=2G
+      - SPARK_EXECUTOR_MEMORY=2G
       - SPARK_NETWORK_CRYPTO_ENABLED=false
       - SPARK_RPC_MESSAGE_MAX_SIZE=512  # Set to a higher value as needed
       - SPARK_MAX_REMOTE_BLOCK_SIZE_FETCH_TO_MEM=134217728  # 128MB
-
     networks:
       - spark-net
 
@@ -59,12 +46,12 @@ services:
     ports:
       - "8081:8081"  # Spark worker web UI
     environment:
-      - SPARK_DRIVER_MEMORY=1G
-      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_DRIVER_MEMORY=2G
+      - SPARK_EXECUTOR_MEMORY=2G
       - SPARK_NETWORK_CRYPTO_ENABLED=false
+      - SPARK_WORKER_CORES=2
       - SPARK_RPC_MESSAGE_MAX_SIZE=512  # Set to a higher value as needed
       - SPARK_MAX_REMOTE_BLOCK_SIZE_FETCH_TO_MEM=134217728  # 128MB
-
     networks:
       - spark-net
 
@@ -86,8 +73,6 @@ services:
       - SPARK_MAX_REMOTE_BLOCK_SIZE_FETCH_TO_MEM=134217728  # 128MB
       - HADOOP_CONF_DIR=/opt/spark/conf
       - HIVE_CONF_DIR=/opt/spark/conf
-      # - HIVE_USER=username
-      # - HIVE_PASSWORD=password
 
     networks:
       - spark-net
